@@ -6,6 +6,8 @@
 # User Option Files
 *.ini
 *.xml
+*.dmp
+*.log
 
 # Npcap
 npcap/
