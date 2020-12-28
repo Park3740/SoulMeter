@@ -180,6 +180,7 @@ DWORD MyNpcap::ReceiveCallback(LPVOID prc) {
 			}
 				break;
 			default:
+				Log::WriteLogA(const_cast<CHAR*>("Receive Callback : Ethernet Header is not IPv4 : %04x"), packet._ethernetHeader->Type);
 				break;
 			}
 		}

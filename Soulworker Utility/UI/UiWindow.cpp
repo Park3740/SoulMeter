@@ -199,14 +199,13 @@ VOID UiWindow::Update() {
 
 VOID UiWindow::DrawScene() {
 	
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	ImVec4 clear_color = UIOPTION.GetWindowBGColor();
 
 	ImGui::Render();
 	DIRECTX11.GetDeviceContext()->OMSetRenderTargets(1, &_renderTargetView, NULL);
-	DIRECTX11.GetDeviceContext()->ClearRenderTargetView(_renderTargetView, (float*)&clear_color);
+	DIRECTX11.GetDeviceContext()->ClearRenderTargetView(_renderTargetView, (FLOAT*)&clear_color);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-	
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -215,13 +214,13 @@ VOID UiWindow::DrawScene() {
 		ImGui::RenderPlatformWindowsDefault();
 	}
 
-	_swapChain->Present(1, 0);
+	_swapChain->Present(UIOPTION.GetFramerate(), 0);
 }
 
 LRESULT UiWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-		return true;
+		return TRUE;
 
 	switch (msg) {
 	case WM_SIZE:
@@ -257,4 +256,8 @@ VOID UiWindow::OnResize() {
 
 VOID UiWindow::UpdateMainTable() {
 	PLAYERTABLE.Update();
+}
+
+const HWND& UiWindow::GetHWND() {
+	return _hWnd;
 }

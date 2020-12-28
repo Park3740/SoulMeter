@@ -4,7 +4,7 @@
 #include ".\UI\PlayerTable.h"
 #include ".\Damage Meter\Damage Meter.h"
 
-UiOption::UiOption()  : _open(0) {
+UiOption::UiOption()  : _open(0), _framerate(4) {
 	_jobBasicColor[0] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(153, 153, 153, 255)));	// Unknown
 	_jobBasicColor[1] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(247, 142, 59, 255)));	// 하루
 	_jobBasicColor[2] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(59, 147, 247, 255)));	// 어윈
@@ -64,15 +64,20 @@ BOOL UiOption::ShowTableOption() {
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
-	ImGui::SliderFloat("WindowBorderSize", &style.WindowBorderSize, 0.0f, 1.0f, "%.0f");
-	ImGui::SliderFloat2("CellPadding", (float*)&style.CellPadding, 0.0f, 20.0f, "%.0f");
+	ImGui::SliderFloat("WindowBorderSize", &_windowBorderSize, 0.0f, 1.0f, "%.0f");
+	style.WindowBorderSize = _windowBorderSize;
+	ImGui::SliderFloat2("CellPadding", (float*)&_cellPadding, 0.0f, 20.0f, "%.0f");
+	style.CellPadding = _cellPadding;
+	ImGui::SliderFloat("Framerate", &_framerate, 1.0f, 4.0f, "%.0f");
 	ImGui::DragFloat("Column Font Scale", &_columnFontScale, 0.005f, 0.3f, 2.0f, "%.1f");
 	ImGui::DragFloat("Table Font Scale", &_tableFontScale, 0.005f, 0.3f, 2.0f, "%.1f");
 	ImGui::Separator();
-	ImGui::ColorEdit4("##ColorText", (FLOAT*)&style.Colors[0], ImGuiColorEditFlags_None); 
+	ImGui::ColorEdit4("##ColorText", (FLOAT*)&_textColor, ImGuiColorEditFlags_None); 
 	ImGui::SameLine(); 	ImGui::Text(ImGui::GetStyleColorName(0));
-	ImGui::ColorEdit4("##ColorBgr", (FLOAT*)&style.Colors[2], ImGuiColorEditFlags_None); 
+	style.Colors[0] = _textColor;
+	ImGui::ColorEdit4("##ColorBgr", (FLOAT*)&_windowBg, ImGuiColorEditFlags_None);
 	ImGui::SameLine();	ImGui::Text(ImGui::GetStyleColorName(2));
+	style.Colors[2] = _windowBg;
 	ImGui::ColorEdit4("##ColorOutline", (FLOAT*)&_outlineColor, ImGuiColorEditFlags_None);
 	ImGui::SameLine();	ImGui::Text(u8"텍스트 Outline 색상");
 	ImGui::ColorEdit4("##ColorActiveColor", (FLOAT*)&_activeColor[1], ImGuiColorEditFlags_None);
@@ -211,6 +216,7 @@ VOID UiOption::Init() {
 BOOL UiOption::GetOption() {
 
 	tinyxml2::XMLDocument doc;
+	ImGuiStyle& style = ImGui::GetStyle();
 
 	if (doc.LoadFile(OPTION_FILE_NAME))
 		return FALSE;
@@ -303,6 +309,51 @@ BOOL UiOption::GetOption() {
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read Auto = %d")), _autoSize);
 #endif
 
+	attr = ele->FindAttribute("CellPaddingX");
+
+	if (attr == nullptr)
+		return FALSE;
+
+	attr->QueryFloatValue(&_cellPadding.x);
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read CellPadding X = %f")), _cellPadding.x);
+#endif
+
+	attr = ele->FindAttribute("CellPaddingY");
+
+	if (attr == nullptr)
+		return FALSE;
+
+	attr->QueryFloatValue(&_cellPadding.y);
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read CellPadding Y = %f")), _cellPadding.y);
+#endif
+
+	attr = ele->FindAttribute("Framerate");
+
+	if (attr == nullptr)
+		return FALSE;
+
+	attr->QueryFloatValue(&_framerate);
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read Framerate = %f")), _framerate);
+#endif
+
+	attr = ele->FindAttribute("BorderSize");
+
+	if (attr == nullptr)
+		return FALSE;
+
+	attr->QueryFloatValue(&_windowBorderSize);
+	style.WindowBorderSize = _windowBorderSize;
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read WindowBorderSize = %f")), _windowBorderSize);
+#endif
+
 	ele = ele->NextSiblingElement("Column");
 
 	if (!ele)
@@ -323,13 +374,81 @@ BOOL UiOption::GetOption() {
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read Column Width, NAME = %f, DPS = %f, D%% = %f, DAMAGE = %f, HIT = %f, CRIT = %f, HITS = %f, MAXC = %f")), _columnWidth[0], _columnWidth[1], _columnWidth[2], _columnWidth[3], _columnWidth[4], _columnWidth[5], _columnWidth[6], _columnWidth[7]);
 #endif
 
+	// Text Color
+	ele = ele->NextSiblingElement("TextColor");
+
+	if (!ele)
+		return FALSE;
+
+	const char name[4][8] = { {"r"}, {"g"}, {"b"}, {"a"} };
+
+	for (int i = 0; i < 4; i++) {
+		attr = ele->FindAttribute(name[i]);
+
+		if (attr == nullptr)
+			return FALSE;
+
+		switch (i) {
+		case 0:
+			attr->QueryFloatValue(&_textColor.x);
+			break;
+		case 1:
+			attr->QueryFloatValue(&_textColor.y);
+			break;
+		case 2:
+			attr->QueryFloatValue(&_textColor.z);
+			break;
+		case 3:
+			attr->QueryFloatValue(&_textColor.w);
+			break;
+		}
+	}
+
+	style.Colors[0] = _textColor;
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read TextColor = %.1f, %.1f, %.1f, %.1f")), _textColor.x, _textColor.y, _textColor.z, _textColor.w);
+#endif
+
+	// WindowBg Color
+	ele = ele->NextSiblingElement("WindowBgColor");
+
+	if (!ele)
+		return FALSE;
+
+	for (int i = 0; i < 4; i++) {
+		attr = ele->FindAttribute(name[i]);
+
+		if (attr == nullptr)
+			return FALSE;
+
+		switch (i) {
+		case 0:
+			attr->QueryFloatValue(&_windowBg.x);
+			break;
+		case 1:
+			attr->QueryFloatValue(&_windowBg.y);
+			break;
+		case 2:
+			attr->QueryFloatValue(&_windowBg.z);
+			break;
+		case 3:
+			attr->QueryFloatValue(&_windowBg.w);
+			break;
+		}
+	}
+
+	style.Colors[2] = _windowBg;
+
+#if DEBUG_READ_XML == 1
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read WindowBgColor = %.1f, %.1f, %.1f, %.1f")), _windowBg.x, _windowBg.y, _windowBg.z, _windowBg.w);
+#endif
+
 	// Outline Color
 	ele = ele->NextSiblingElement("OutlineColor");
 		
 	if (!ele)
 		return FALSE;
-
-	const char name[4][8] = { {"r"}, {"g"}, {"b"}, {"a"} };
 
 	for (int i = 0; i < 4; i++) {
 		attr = ele->FindAttribute(name[i]);
@@ -518,6 +637,10 @@ BOOL UiOption::SaveOption() {
 	option->SetAttribute("K", _is1K);
 	option->SetAttribute("M", _is1M);
 	option->SetAttribute("Auto", _autoSize);
+	option->SetAttribute("CellPaddingX", _cellPadding.x);
+	option->SetAttribute("CellPaddingY", _cellPadding.y);
+	option->SetAttribute("Framerate", _framerate);
+	option->SetAttribute("BorderSize", _windowBorderSize);
 
 	tinyxml2::XMLElement* column = doc.NewElement("Column");
 	root->LinkEndChild(column);
@@ -530,6 +653,20 @@ BOOL UiOption::SaveOption() {
 	column->SetAttribute("CRIT", _columnWidth[5]);
 	column->SetAttribute("HITS", _columnWidth[6]);
 	column->SetAttribute("MAXC", _columnWidth[7]);
+
+	tinyxml2::XMLElement* text_color = doc.NewElement("TextColor");
+	root->LinkEndChild(text_color);
+	text_color->SetAttribute("r", _textColor.x);
+	text_color->SetAttribute("g", _textColor.y);
+	text_color->SetAttribute("b", _textColor.z);
+	text_color->SetAttribute("a", _textColor.w);
+
+	tinyxml2::XMLElement* windowbg_color = doc.NewElement("WindowBgColor");
+	root->LinkEndChild(windowbg_color);
+	windowbg_color->SetAttribute("r", _windowBg.x);
+	windowbg_color->SetAttribute("g", _windowBg.y);
+	windowbg_color->SetAttribute("b", _windowBg.z);
+	windowbg_color->SetAttribute("a", _windowBg.w);
 	
 	tinyxml2::XMLElement* outline_color = doc.NewElement("OutlineColor");
 	root->LinkEndChild(outline_color);
@@ -590,6 +727,9 @@ BOOL UiOption::SetBasicOption() {
 	ImGui::StyleColorsDark();
 
 	ImGuiStyle& style = ImGui::GetStyle();
+	ImGuiIO& io = ImGui::GetIO();
+	_framerate = 4;
+	_windowBorderSize = 1;
 
 	_fontScale = 1; _columnFontScale = 1; _tableFontScale = 1; _styleIndex = 1;
 
@@ -599,10 +739,15 @@ BOOL UiOption::SetBasicOption() {
 	_outlineColor = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(0, 0, 0, 255)));
 	_activeColor[0] = style.Colors[10];
 	_activeColor[1] = style.Colors[11];
-
+	_textColor = style.Colors[0];
+	_windowBg = style.Colors[2];
+	
 	_is1K = FALSE;
 	_is1M = FALSE;
 	_autoSize = TRUE;
+
+	_cellPadding.x = 0;
+	_cellPadding.y = 0;
 
 	for (INT i = 0; i < 8; i++)
 		_columnWidth[i] = 100;
@@ -611,6 +756,7 @@ BOOL UiOption::SetBasicOption() {
 	HOTKEY.InsertHotkeyStop(DIK_LCONTROL, DIK_DELETE, -1);
 
 	Helper();
+	PLAYERTABLE.ResizeTalbe();
 	_open = TRUE;
 
 	return TRUE;
@@ -734,4 +880,12 @@ FLOAT& UiOption::operator[](INT index) {
 		assert(index < 0 || index > 7);
 
 	return _columnWidth[index];
+}
+
+const FLOAT& UiOption::GetFramerate() {
+	return _framerate;
+}
+
+const ImVec4& UiOption::GetWindowBGColor() {
+	return _windowBg;
 }

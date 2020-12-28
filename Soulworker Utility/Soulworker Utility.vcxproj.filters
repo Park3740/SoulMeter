@@ -73,6 +73,9 @@
     <Filter Include="UI\Window\UI">
       <UniqueIdentifier>{d1da892c-51f8-4ffd-af79-67efd73c9dad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Buff Meter">
+      <UniqueIdentifier>{0e1b8015-2f51-4434-97a0-aa057ccba788}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

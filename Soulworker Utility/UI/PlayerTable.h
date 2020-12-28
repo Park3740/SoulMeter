@@ -23,6 +23,7 @@ private:
 	VOID BeginPopupMenu();
 
 	VOID SetWindowSize();
+	VOID SetMainWindowSize();
 	VOID StoreColumnWidth(INT columnSize);
 	VOID SetupFontScale();
 

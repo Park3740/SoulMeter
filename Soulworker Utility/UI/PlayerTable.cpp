@@ -4,6 +4,7 @@
 #include ".\Damage Meter\History.h"
 #include ".\UI\PlayerTable.h"
 #include ".\Damage Meter\MySQLite.h"
+#include ".\UI\UiWindow.h"
 
 PlayerTable::PlayerTable() : _tableResize(0), _globalFontScale(0), _columnFontScale(0), _tableFontScale(0), _curWindowSize(0) {
 
@@ -77,6 +78,7 @@ VOID PlayerTable::Update() {
 		{
 			if (!UIOPTION.isOption() || _tableResize)
 				SetWindowSize();
+			SetMainWindowSize();
 
 			BeginPopupMenu();
 
@@ -115,8 +117,15 @@ VOID PlayerTable::SetWindowSize() {
 	for (int i = 0; i < 8; i++)
 		width += UIOPTION[i];
 
-
 	ImGui::SetWindowSize(ImVec2(FLOOR(width), FLOOR(_curWindowSize)));
+}
+
+VOID PlayerTable::SetMainWindowSize() {
+
+	auto pos = ImGui::GetWindowPos();
+	auto size = ImGui::GetWindowSize();
+
+	SetWindowPos(UIWINDOW.GetHWND(), HWND_TOPMOST, pos.x, pos.y, size.x, size.y, SWP_NOACTIVATE);
 }
 
 VOID PlayerTable::BeginPopupMenu() {
@@ -180,7 +189,7 @@ VOID PlayerTable::SetupTable() {
 		columnFlags |= ImGuiTableColumnFlags_NoSort;
 
 		if (!UIOPTION.isOption())
-			columnFlags |= ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder;
+			columnFlags |= ImGuiTableColumnFlags_NoReorder;
 
 		ImGui::SetWindowFontScale(_columnFontScale);
 

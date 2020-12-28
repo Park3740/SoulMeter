@@ -13,6 +13,8 @@ private:
 	ImVec4 _jobBasicColor[10];
 	ImVec4 _activeColor[2];
 	ImVec4 _outlineColor;
+	ImVec4 _textColor;
+	ImVec4 _windowBg;
 
 	INT _styleIndex;
 	BOOL ShowStyleSelector(const CHAR* label);
@@ -26,6 +28,9 @@ private:
 	BOOL _is1M;
 	BOOL _autoSize;
 	FLOAT _columnWidth[8];
+	ImVec2 _cellPadding;
+	FLOAT _framerate;
+	FLOAT _windowBorderSize;
 	BOOL ShowTableOption();
 
 	BOOL ShowHotkeySetting();
@@ -54,6 +59,7 @@ public:
 	const FLOAT& GetTableFontScale();
 	const ImVec4& GetActiveColor();
 	const ImVec4& GetInActiveColor();
+	const ImVec4& GetWindowBGColor();
 	const BOOL& is1K();
 	const BOOL& is1M();
 	const BOOL& isAutoSize();
@@ -75,6 +81,8 @@ public:
 	VOID SetColumnCritSize(FLOAT size);
 	VOID SetColumnHitsSize(FLOAT size);
 	VOID SetColumnMaxcSize(FLOAT size);
+
+	const FLOAT& GetFramerate();
 
 	FLOAT& operator[](INT index);
 };

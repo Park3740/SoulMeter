@@ -26,9 +26,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 		}
 	}
 
-	UiWindow ui = UiWindow();
-	ui.Init(0, 0, 0, 0);
-	ui.Run();
+	if(UIWINDOW.Init(1, 1, 1, 1)){
+		UIWINDOW.Run();
+	}
 
 	MiniDump::End();
 }
