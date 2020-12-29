@@ -45,7 +45,6 @@ VOID PlayerTable::Update() {
 
 	DAMAGEMETER.GetLock();
 	{
-
 		ImGuiStyle& style = ImGui::GetStyle();
 
 		ImVec2 prevWindowPadding = style.WindowPadding;
@@ -76,8 +75,12 @@ VOID PlayerTable::Update() {
 		sprintf_s(title, 128, "%s : %02d:%02d###DamageMeter", DAMAGEMETER.GetWorldName(), (UINT)DAMAGEMETER.GetTime() / 60, (UINT)DAMAGEMETER.GetTime() % 60);
 		ImGui::Begin(title, 0, windowFlag);
 		{
-			if (!UIOPTION.isOption() || _tableResize)
+			if(!UIOPTION.isOption() || _tableResize)
 				SetWindowSize();
+
+			if(UIOPTION.isOption())
+				StoreWindowWidth();
+
 			SetMainWindowSize();
 
 			BeginPopupMenu();
@@ -112,12 +115,7 @@ VOID PlayerTable::SetWindowSize() {
 	if (ImGui::GetScrollMaxY() > 0)
 		_curWindowSize += ImGui::GetScrollMaxY();
 
-	FLOAT width = style.CellPadding.x * 2 * 8;
-
-	for (int i = 0; i < 8; i++)
-		width += UIOPTION[i];
-
-	ImGui::SetWindowSize(ImVec2(FLOOR(width), FLOOR(_curWindowSize)));
+	ImGui::SetWindowSize(ImVec2(UIOPTION.GetWindowWidth(), FLOOR(_curWindowSize)));
 }
 
 VOID PlayerTable::SetMainWindowSize() {
@@ -125,7 +123,11 @@ VOID PlayerTable::SetMainWindowSize() {
 	auto pos = ImGui::GetWindowPos();
 	auto size = ImGui::GetWindowSize();
 
-	SetWindowPos(UIWINDOW.GetHWND(), HWND_TOPMOST, pos.x, pos.y, size.x, size.y, SWP_NOACTIVATE);
+	SetWindowPos(UIWINDOW.GetHWND(), HWND_TOPMOST, pos.x, pos.y, size.x + 1, size.y + 1, SWP_NOACTIVATE);
+}
+
+VOID PlayerTable::StoreWindowWidth() {
+	UIOPTION.SetWindowWidth(ImGui::GetWindowSize().x);
 }
 
 VOID PlayerTable::BeginPopupMenu() {
@@ -178,18 +180,12 @@ VOID PlayerTable::BeginPopupMenu() {
 VOID PlayerTable::SetupTable() {
 
 	ImGuiTableFlags tableFlags = ImGuiTableFlags_None;
-	tableFlags |= (ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable);
-
-	if (UIOPTION.isOption())
-		tableFlags |= ImGuiTableFlags_Resizable;
+	tableFlags |= (ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Resizable);
 
 	if(ImGui::BeginTable("Player Table", 8, tableFlags)) {
 	
 		ImGuiTableColumnFlags columnFlags = ImGuiTableColumnFlags_None;
 		columnFlags |= ImGuiTableColumnFlags_NoSort;
-
-		if (!UIOPTION.isOption())
-			columnFlags |= ImGuiTableColumnFlags_NoReorder;
 
 		ImGui::SetWindowFontScale(_columnFontScale);
 
@@ -203,8 +199,6 @@ VOID PlayerTable::SetupTable() {
 		ImGui::TableSetupColumn("MAXC", columnFlags | ImGuiTableColumnFlags_WidthStretch, -1);
 		ImGui::TableHeadersRow();
 
-		StoreColumnWidth(8);
-
 		FLOAT window_width = ImGui::GetWindowWidth();
 
 		ImGui::SetWindowFontScale(_tableFontScale);
@@ -216,24 +210,6 @@ VOID PlayerTable::SetupTable() {
 		ImGui::EndTable();
 	}
 
-}
-
-VOID PlayerTable::StoreColumnWidth(INT columnSize) {
-
-	if (!UIOPTION.isOption() || columnSize < 1)
-		return;
-
-	ImGui::TableSetColumnIndex(0);
-
-	for (INT i = 0; i < columnSize; i++) {
-
-		if (ImGui::TableGetColumnFlags() & ImGuiTableColumnFlags_IsVisible)
-			UIOPTION[i] = ImGui::GetColumnWidth();
-		else
-			UIOPTION[i] = 1;
-
-		ImGui::TableNextColumn();
-	}
 }
 
 VOID PlayerTable::UpdateTable(FLOAT windowWidth) {

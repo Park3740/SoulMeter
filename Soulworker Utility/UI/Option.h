@@ -16,9 +16,6 @@ private:
 	ImVec4 _textColor;
 	ImVec4 _windowBg;
 
-	INT _styleIndex;
-	BOOL ShowStyleSelector(const CHAR* label);
-
 	FLOAT _fontScale;
 	BOOL ShowFontSelector();
 
@@ -26,11 +23,10 @@ private:
 	FLOAT _tableFontScale;
 	BOOL _is1K;
 	BOOL _is1M;
-	BOOL _autoSize;
-	FLOAT _columnWidth[8];
 	ImVec2 _cellPadding;
 	FLOAT _framerate;
 	FLOAT _windowBorderSize;
+	FLOAT _windowWidth;
 	BOOL ShowTableOption();
 
 	BOOL ShowHotkeySetting();
@@ -62,27 +58,9 @@ public:
 	const ImVec4& GetWindowBGColor();
 	const BOOL& is1K();
 	const BOOL& is1M();
-	const BOOL& isAutoSize();
-
-	const FLOAT& GetColumnNameSize();
-	const FLOAT& GetColumnDpsSize();
-	const FLOAT& GetColumnDperSize();
-	const FLOAT& GetColumnDamageSize();
-	const FLOAT& GetColumnHitSize();
-	const FLOAT& GetColumnCritSize();
-	const FLOAT& GetColumnHitsSize();
-	const FLOAT& GetColumnMaxcSize();
-
-	VOID SetColumnNameSize(FLOAT size);
-	VOID SetColumnDpsSize(FLOAT size);
-	VOID SetColumnDperSize(FLOAT size);
-	VOID SetColumnDamageSize(FLOAT size);
-	VOID SetColumnHitSize(FLOAT size);
-	VOID SetColumnCritSize(FLOAT size);
-	VOID SetColumnHitsSize(FLOAT size);
-	VOID SetColumnMaxcSize(FLOAT size);
 
 	const FLOAT& GetFramerate();
 
-	FLOAT& operator[](INT index);
+	const FLOAT& GetWindowWidth();
+	VOID SetWindowWidth(const FLOAT& width);
 };

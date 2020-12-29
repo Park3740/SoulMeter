@@ -4,7 +4,7 @@
 #include ".\UI\PlayerTable.h"
 #include ".\Damage Meter\Damage Meter.h"
 
-UiOption::UiOption()  : _open(0), _framerate(4) {
+UiOption::UiOption()  : _open(0), _framerate(2), _windowBorderSize(1), _fontScale(1), _columnFontScale(1), _tableFontScale(1), _is1K(0), _is1M(0), _cellPadding(0,0), _windowWidth(800)  {
 	_jobBasicColor[0] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(153, 153, 153, 255)));	// Unknown
 	_jobBasicColor[1] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(247, 142, 59, 255)));	// 하루
 	_jobBasicColor[2] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(59, 147, 247, 255)));	// 어윈
@@ -15,27 +15,24 @@ UiOption::UiOption()  : _open(0), _framerate(4) {
 	_jobBasicColor[7] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(138, 2, 4, 255)));		// 치이
 	_jobBasicColor[8] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(118, 206, 158, 255)));	// 에프넬
 	_jobBasicColor[9] = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(128, 128, 64, 255)));	// 이나비
+
+	for (int i = 0; i < 10; i++)
+		_jobColor[i] = _jobBasicColor[i];
+
+	ImGui::StyleColorsDark();
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGuiIO& io = ImGui::GetIO();
+
+	_outlineColor = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(0, 0, 0, 255)));
+	_activeColor[0] = style.Colors[10];
+	_activeColor[1] = style.Colors[11];
+	_textColor = style.Colors[0];
+	_windowBg = style.Colors[2];
 }
 
 UiOption::~UiOption() {
 	
-}
-
-BOOL UiOption::ShowStyleSelector(const CHAR* label) {
-
-	ImGui::Text(u8"기본 스타일을 선택하세요.");
-
-	if (ImGui::Combo(label, &_styleIndex, "Classic\0Dark\0Light\0"))
-	{
-		switch (_styleIndex)
-		{
-		case 0: ImGui::StyleColorsClassic(); break;
-		case 1: ImGui::StyleColorsDark(); break;
-		case 2: ImGui::StyleColorsLight(); break;
-		}
-		return TRUE;
-	}
-	return FALSE;
 }
 
 BOOL UiOption::ShowFontSelector() {
@@ -176,12 +173,6 @@ VOID UiOption::OpenOption() {
 			_open = FALSE;
 		}
 
-		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
-		ShowStyleSelector("Style");
-		ImGui::PopItemWidth();
-
-		ImGui::Separator();
-
 		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.2f);
 		ShowFontSelector();
 		ImGui::PopItemWidth();
@@ -231,19 +222,8 @@ BOOL UiOption::GetOption() {
 
 	if (!ele)
 		return FALSE;
-	
-	auto attr = ele->FindAttribute("StyleIndex");
 
-	if (attr == nullptr)
-		return FALSE;
-
-	attr->QueryIntValue(&_styleIndex);
-
-#if DEBUG_READ_XML == 1
-	Log::WriteLog(const_cast<LPTSTR>(_T("Read StyleIndex = %d")), _styleIndex);
-#endif
-
-	attr = ele->FindAttribute("GlobalScale");
+	auto attr = ele->FindAttribute("GlobalScale");
 
 	if (attr == nullptr)
 		return FALSE;
@@ -262,7 +242,7 @@ BOOL UiOption::GetOption() {
 	attr->QueryFloatValue(&_tableFontScale);
 
 #if DEBUG_READ_XML == 1
-	Log::WriteLog(const_cast<LPTSTR>(_T("Read TableFontScale = %.1f")), _fontScale);
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read TableFontScale = %.1f")), _tableFontScale);
 #endif
 
 	attr = ele->FindAttribute("ColumnScale");
@@ -298,23 +278,13 @@ BOOL UiOption::GetOption() {
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read 1M = %d")), _is1M);
 #endif
 
-	attr = ele->FindAttribute("Auto");
-
-	if (attr == nullptr)
-		return FALSE;
-
-	attr->QueryIntValue(&_autoSize);
-
-#if DEBUG_READ_XML == 1
-	Log::WriteLog(const_cast<LPTSTR>(_T("Read Auto = %d")), _autoSize);
-#endif
-
 	attr = ele->FindAttribute("CellPaddingX");
 
 	if (attr == nullptr)
 		return FALSE;
 
 	attr->QueryFloatValue(&_cellPadding.x);
+	style.CellPadding.x = _cellPadding.x;
 
 #if DEBUG_READ_XML == 1
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read CellPadding X = %f")), _cellPadding.x);
@@ -326,6 +296,7 @@ BOOL UiOption::GetOption() {
 		return FALSE;
 
 	attr->QueryFloatValue(&_cellPadding.y);
+	style.CellPadding.y = _cellPadding.y;
 
 #if DEBUG_READ_XML == 1
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read CellPadding Y = %f")), _cellPadding.y);
@@ -354,24 +325,15 @@ BOOL UiOption::GetOption() {
 	Log::WriteLog(const_cast<LPTSTR>(_T("Read WindowBorderSize = %f")), _windowBorderSize);
 #endif
 
-	ele = ele->NextSiblingElement("Column");
+	attr = ele->FindAttribute("WindowWidth");
 
-	if (!ele)
+	if (attr == nullptr)
 		return FALSE;
 
-	const char column_name[8][16] = { {"NAME"}, {"DPS"}, {"DPER"}, {"DAMAGE"}, {"HIT"}, {"CRIT"}, {"HITS"}, {"MAXC"} };
-
-	for (INT i = 0; i < 8; i++) {
-		attr = ele->FindAttribute(column_name[i]);
-
-		if (attr == nullptr)
-			return FALSE;
-
-		attr->QueryFloatValue(&_columnWidth[i]);
-	}
+	attr->QueryFloatValue(&_windowWidth);
 
 #if DEBUG_READ_XML == 1
-	Log::WriteLog(const_cast<LPTSTR>(_T("Read Column Width, NAME = %f, DPS = %f, D%% = %f, DAMAGE = %f, HIT = %f, CRIT = %f, HITS = %f, MAXC = %f")), _columnWidth[0], _columnWidth[1], _columnWidth[2], _columnWidth[3], _columnWidth[4], _columnWidth[5], _columnWidth[6], _columnWidth[7]);
+	Log::WriteLog(const_cast<LPTSTR>(_T("Read WindowWidth = %f")), _windowWidth);
 #endif
 
 	// Text Color
@@ -630,29 +592,16 @@ BOOL UiOption::SaveOption() {
 	tinyxml2::XMLElement* option = doc.NewElement("Option");
 	root->LinkEndChild(option);
 
-	option->SetAttribute("StyleIndex", _styleIndex);
 	option->SetAttribute("GlobalScale", _fontScale);
 	option->SetAttribute("TableScale", _tableFontScale);
 	option->SetAttribute("ColumnScale", _columnFontScale);
 	option->SetAttribute("K", _is1K);
 	option->SetAttribute("M", _is1M);
-	option->SetAttribute("Auto", _autoSize);
 	option->SetAttribute("CellPaddingX", _cellPadding.x);
 	option->SetAttribute("CellPaddingY", _cellPadding.y);
 	option->SetAttribute("Framerate", _framerate);
 	option->SetAttribute("BorderSize", _windowBorderSize);
-
-	tinyxml2::XMLElement* column = doc.NewElement("Column");
-	root->LinkEndChild(column);
-
-	column->SetAttribute("NAME", _columnWidth[0]);
-	column->SetAttribute("DPS", _columnWidth[1]);
-	column->SetAttribute("DPER", _columnWidth[2]);
-	column->SetAttribute("DAMAGE", _columnWidth[3]);
-	column->SetAttribute("HIT", _columnWidth[4]);
-	column->SetAttribute("CRIT", _columnWidth[5]);
-	column->SetAttribute("HITS", _columnWidth[6]);
-	column->SetAttribute("MAXC", _columnWidth[7]);
+	option->SetAttribute("WindowWidth", _windowWidth);
 
 	tinyxml2::XMLElement* text_color = doc.NewElement("TextColor");
 	root->LinkEndChild(text_color);
@@ -723,35 +672,6 @@ BOOL UiOption::SaveOption() {
 }
 
 BOOL UiOption::SetBasicOption() {
-
-	ImGui::StyleColorsDark();
-
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImGuiIO& io = ImGui::GetIO();
-	_framerate = 4;
-	_windowBorderSize = 1;
-
-	_fontScale = 1; _columnFontScale = 1; _tableFontScale = 1; _styleIndex = 1;
-
-	for (int i = 0; i < 10; i++)
-		_jobColor[i] = _jobBasicColor[i];
-
-	_outlineColor = ImVec4(ImGui::ColorConvertU32ToFloat4(ImColor(0, 0, 0, 255)));
-	_activeColor[0] = style.Colors[10];
-	_activeColor[1] = style.Colors[11];
-	_textColor = style.Colors[0];
-	_windowBg = style.Colors[2];
-	
-	_is1K = FALSE;
-	_is1M = FALSE;
-	_autoSize = TRUE;
-
-	_cellPadding.x = 0;
-	_cellPadding.y = 0;
-
-	for (INT i = 0; i < 8; i++)
-		_columnWidth[i] = 100;
-	
 	HOTKEY.InsertHotkeyToogle(DIK_LCONTROL, DIK_END, -1);
 	HOTKEY.InsertHotkeyStop(DIK_LCONTROL, DIK_DELETE, -1);
 
@@ -820,72 +740,18 @@ const BOOL& UiOption::isOption() {
 	return _open;
 }
 
-const BOOL& UiOption::isAutoSize() {
-	return _autoSize;
-}
-
-const FLOAT& UiOption::GetColumnNameSize() { 
-	return _columnWidth[0];
-}
-const FLOAT& UiOption::GetColumnDpsSize(){
-	return _columnWidth[1];
-}
-const FLOAT& UiOption::GetColumnDperSize(){
-	return _columnWidth[2];
-}
-const FLOAT& UiOption::GetColumnDamageSize(){
-	return _columnWidth[3];
-}
-const FLOAT& UiOption::GetColumnHitSize(){
-	return _columnWidth[4];
-}
-const FLOAT& UiOption::GetColumnCritSize(){
-	return _columnWidth[5];
-}
-const FLOAT& UiOption::GetColumnHitsSize(){
-	return _columnWidth[6];
-}
-const FLOAT& UiOption::GetColumnMaxcSize(){
-	return _columnWidth[7];
-}
-
-VOID UiOption::SetColumnNameSize(FLOAT size) {
-	_columnWidth[0] = size;
-}
-VOID UiOption::SetColumnDpsSize(FLOAT size) {
-	_columnWidth[1] = size;
-}
-VOID UiOption::SetColumnDperSize(FLOAT size) {
-	_columnWidth[2] = size;
-}
-VOID UiOption::SetColumnDamageSize(FLOAT size) {
-	_columnWidth[3] = size;
-}
-VOID UiOption::SetColumnHitSize(FLOAT size) {
-	_columnWidth[4] = size;
-}
-VOID UiOption::SetColumnCritSize(FLOAT size) {
-	_columnWidth[5] = size;
-}
-VOID UiOption::SetColumnHitsSize(FLOAT size) {
-	_columnWidth[6] = size;
-}
-VOID UiOption::SetColumnMaxcSize(FLOAT size) {
-	_columnWidth[7] = size;
-}
-
-FLOAT& UiOption::operator[](INT index) {
-
-	if (index < 0 || index > 7)
-		assert(index < 0 || index > 7);
-
-	return _columnWidth[index];
-}
-
 const FLOAT& UiOption::GetFramerate() {
 	return _framerate;
 }
 
 const ImVec4& UiOption::GetWindowBGColor() {
 	return _windowBg;
+}
+
+const FLOAT& UiOption::GetWindowWidth() {
+	return _windowWidth;
+}
+
+VOID UiOption::SetWindowWidth(const FLOAT& width) {
+	_windowWidth = width;
 }
