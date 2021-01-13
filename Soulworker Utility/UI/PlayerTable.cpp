@@ -6,7 +6,7 @@
 #include ".\Damage Meter\MySQLite.h"
 #include ".\UI\UiWindow.h"
 
-PlayerTable::PlayerTable() : _tableResize(0), _globalFontScale(0), _columnFontScale(0), _tableFontScale(0), _curWindowSize(0) {
+PlayerTable::PlayerTable() : _tableResize(0), _globalFontScale(0), _columnFontScale(0), _tableFontScale(0), _curWindowSize(0), _tableTime(0), _accumulatedTime(0) {
 
 }
 
@@ -61,6 +61,13 @@ VOID PlayerTable::Update() {
 		else {
 			style.Colors[10] = UIOPTION.GetInActiveColor();
 			style.Colors[11] = UIOPTION.GetInActiveColor();
+		}
+
+		_accumulatedTime += UIWINDOW.GetDeltaTime();
+
+		if (_accumulatedTime > UIOPTION.GetRefreshTime()) {
+			_tableTime = DAMAGEMETER.GetTime();
+			_accumulatedTime = 0;
 		}
 
 		SetupFontScale();
@@ -182,7 +189,7 @@ VOID PlayerTable::SetupTable() {
 	ImGuiTableFlags tableFlags = ImGuiTableFlags_None;
 	tableFlags |= (ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Resizable);
 
-	if(ImGui::BeginTable("Player Table", 8, tableFlags)) {
+	if(ImGui::BeginTable("###Player Table", 8, tableFlags)) {
 	
 		ImGuiTableColumnFlags columnFlags = ImGuiTableColumnFlags_None;
 		columnFlags |= ImGuiTableColumnFlags_NoSort;
@@ -241,7 +248,7 @@ VOID PlayerTable::UpdateTable(FLOAT windowWidth) {
 		ImGui::TableNextColumn();
 
 		// DPS
-		DOUBLE dps = ((DOUBLE)(*itr)->GetDamage()) / DAMAGEMETER.GetTime();
+		DOUBLE dps = ((DOUBLE)(*itr)->GetDamage()) / _tableTime;
 		if (UIOPTION.is1K())
 			dps /= 1000;
 		else if (UIOPTION.is1M())
@@ -297,7 +304,7 @@ VOID PlayerTable::UpdateTable(FLOAT windowWidth) {
 		ImGui::TableNextColumn();
 
 		// HIT/S
-		sprintf_s(label, 128, "%.2lf", (DOUBLE)(*itr)->GetHitCount() / DAMAGEMETER.GetTime());
+		sprintf_s(label, 128, "%.2lf", (DOUBLE)(*itr)->GetHitCount() / _tableTime);
 		ImGui::Text(label);
 
 		ImGui::TableNextColumn();

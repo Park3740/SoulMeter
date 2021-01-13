@@ -37,6 +37,9 @@ private:
 
 	BOOL _tableResize;
 
+	FLOAT _tableTime;
+	FLOAT _accumulatedTime;
+
 public:
 	PlayerTable();
 	~PlayerTable();

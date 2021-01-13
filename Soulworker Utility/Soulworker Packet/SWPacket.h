@@ -1,6 +1,6 @@
 #pragma once
 
-#define SWMAGIC 2
+#define SWMAGIC 3
 #define SWCONSTVALUE 1
 
 #pragma pack(push, 1)

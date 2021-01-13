@@ -1,7 +1,5 @@
 #pragma once
 
-typedef std::chrono::system_clock::time_point timePoint;
-
 typedef enum {
 	end = 0,
 	run = 1,

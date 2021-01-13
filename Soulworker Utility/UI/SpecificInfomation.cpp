@@ -2,9 +2,11 @@
 #include ".\UI\SpecificInfomation.h"
 #include ".\UI\Option.h"
 #include ".\Damage Meter\Damage Meter.h"
+#include ".\Buff Meter\Buff Meter.h"
+#include ".\UI\UiWindow.h"
 
 
-SpecificInformation::SpecificInformation(UINT32 playerID) : _playerID(playerID), _monsterID(0), _globalFontScale(0), _columnFontScale(0), _tableFontScale(0) {
+SpecificInformation::SpecificInformation(UINT32 playerID) : _playerID(playerID), _monsterID_SKILL(0), _globalFontScale(0), _columnFontScale(0), _tableFontScale(0), _tableTime(0), _accumulatedTime(0) {
 
 }
 
@@ -28,6 +30,13 @@ VOID SpecificInformation::Update(BOOL* open) {
 
 	SetupFontScale();
 
+	_accumulatedTime += UIWINDOW.GetDeltaTime();
+
+	if (_accumulatedTime > UIOPTION.GetRefreshTime()) {
+		_tableTime = DAMAGEMETER.GetTime();
+		_accumulatedTime = 0;
+	}
+
 	CHAR title[128] = { 0 };
 
 	sprintf_s(title, 128, "%s %s", DAMAGEMETER.GetPlayerName(_playerID), u8"상세 정보");
@@ -35,18 +44,20 @@ VOID SpecificInformation::Update(BOOL* open) {
 	{
 		sprintf_s(title, 128, "##tab%d", _playerID);
 
-		ImGui::BeginTabBar(title);
+		if(ImGui::BeginTabBar(title))
 		{
 			UpdateSkillInfo();
+			UpdateBuffMeter();
+
+			ImGui::EndTabBar();
 		}
-		ImGui::EndTabBar();
 	}
 	ImGui::End();
 }
 
 VOID SpecificInformation::UpdateSkillInfo() {
 	
-	ImGui::BeginTabItem(u8"스킬 상세 정보");
+	if(ImGui::BeginTabItem(u8"스킬 상세 정보"))
 	{
 		UpdateMonsterCombo();
 		
@@ -57,8 +68,9 @@ VOID SpecificInformation::UpdateSkillInfo() {
 		}
 		ImGui::TextAlignCenter::UnSetTextAlignCenter();
 		ImGui::OutlineText::PopOutlineText();
+
+		ImGui::EndTabItem();
 	}
-	ImGui::EndTabItem();
 }
 
 VOID SpecificInformation::UpdateMonsterCombo() {
@@ -70,7 +82,7 @@ VOID SpecificInformation::UpdateMonsterCombo() {
 
 	const CHAR* comboPreview = nullptr;
 
-	auto monster = (*player)->GetMonsterInfo(_monsterID);
+	auto monster = (*player)->GetMonsterInfo(_monsterID_SKILL);
 
 	if (monster != (*player)->end()) {
 		comboPreview = (*monster)->GetName();
@@ -84,10 +96,7 @@ VOID SpecificInformation::UpdateMonsterCombo() {
 			sprintf_s(label, 128, "%s##%d", (*itr)->GetName(), (*itr)->GetID());
 
 			if (ImGui::Selectable(label)) {
-				_monsterID = (*itr)->GetID();
-#if DEBUG_MONSTER_COMBO == 1
-				Log::WriteLog(const_cast<LPTSTR>(_T("[DEBUG] [MONSTER COMBO] [MONSTER ID = %d] [NAME = %s]")), _monsterID, (*itr)->GetName());
-#endif
+				_monsterID_SKILL = (*itr)->GetID();
 			}
 		}
 
@@ -102,7 +111,7 @@ VOID SpecificInformation::UpdateSkillTable() {
 	if (player == DAMAGEMETER.end())
 		return;
 
-	auto monster = (*player)->GetMonsterInfo(_monsterID);
+	auto monster = (*player)->GetMonsterInfo(_monsterID_SKILL);
 
 	if (monster == (*player)->end())
 		return;
@@ -112,18 +121,6 @@ VOID SpecificInformation::UpdateSkillTable() {
 	ImVec2 prevWindowPadding = style.WindowPadding;
 	style.WindowPadding.x = 0;
 	style.WindowPadding.y = 0;
-
-	ImVec4 prevInActiveColor = style.Colors[10];
-	ImVec4 prevActiveColor = style.Colors[11];
-
-	if (DAMAGEMETER.isRun()) {
-		style.Colors[10] = UIOPTION.GetActiveColor();
-		style.Colors[11] = UIOPTION.GetActiveColor();
-	}
-	else {
-		style.Colors[10] = UIOPTION.GetInActiveColor();
-		style.Colors[11] = UIOPTION.GetInActiveColor();
-	}
 
 	CHAR table[128] = { 0 };
 	sprintf_s(table, 128, "##skilltable%d", _playerID);
@@ -169,7 +166,7 @@ VOID SpecificInformation::UpdateSkillTable() {
 			ImGui::TableNextColumn();
 
 			// DPS
-			DOUBLE dps = ((DOUBLE)(*itr)->GetDamage()) / DAMAGEMETER.GetTime();
+			DOUBLE dps = ((DOUBLE)(*itr)->GetDamage()) / _tableTime;
 			if (UIOPTION.is1K())
 				dps /= 1000;
 			else if (UIOPTION.is1M())
@@ -225,7 +222,7 @@ VOID SpecificInformation::UpdateSkillTable() {
 			ImGui::TableNextColumn();
 
 			// HIT/S
-			sprintf_s(label, 128, "%.2lf", (DOUBLE)(*itr)->GetHitCount() / DAMAGEMETER.GetTime());
+			sprintf_s(label, 128, "%.2lf", (DOUBLE)(*itr)->GetHitCount() / _tableTime);
 			ImGui::Text(label);
 		}
 		
@@ -236,9 +233,85 @@ VOID SpecificInformation::UpdateSkillTable() {
 	style.WindowPadding.x = prevWindowPadding.x;
 	style.WindowPadding.y = prevWindowPadding.y;
 
-	style.Colors[10] = prevInActiveColor;
-	style.Colors[11] = prevActiveColor;
+}
 
+VOID SpecificInformation::UpdateBuffMeter() {
+
+	BUFFMETER.GetLock();
+	{
+		if (ImGui::BeginTabItem(u8"(디)버프 집계 정보"))
+		{
+			ImGui::OutlineText::PushOutlineText(ImGui::IMGUIOUTLINETEXT(UIOPTION.GetOutlineColor(), 1));
+			ImGui::TextAlignCenter::SetTextAlignCenter();
+			{
+				UpdateBuffTable();
+			}
+			ImGui::TextAlignCenter::UnSetTextAlignCenter();
+			ImGui::OutlineText::PopOutlineText();
+
+			ImGui::EndTabItem();
+		}
+	}
+	BUFFMETER.FreeLock();
+}
+
+VOID SpecificInformation::UpdateBuffTable() {
+
+	auto buff = BUFFMETER.find(_playerID);
+
+	if (buff == BUFFMETER.end())
+		return;
+
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	ImVec2 prevWindowPadding = style.WindowPadding;
+	style.WindowPadding.x = 0;
+	style.WindowPadding.y = 0;
+
+	CHAR table[128] = { 0 };
+	sprintf_s(table, 128, "##bufftable%d", _playerID);
+	if (ImGui::BeginTable(table, 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Reorderable)) {
+
+		ImGui::SetWindowFontScale(_columnFontScale);
+
+		ImGui::TableSetupColumn("NAME", ImGuiTableColumnFlags_NoReorder | ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoClip | ImGuiTableColumnFlags_WidthFixed, -1);
+		ImGui::TableSetupColumn("DURATION", ImGuiTableColumnFlags_WidthFixed, -1);
+		ImGui::TableHeadersRow();
+
+		ImGui::SetWindowFontScale(_tableFontScale);
+
+		UINT windowWidth = ImGui::GetWindowWidth();
+		for (auto itr = (*buff)->begin(); itr != (*buff)->end(); itr++) {
+
+			CHAR label[128] = { 0 };
+			FLOAT duration_percent = (*itr)->GetTime() / DAMAGEMETER.GetTime();
+
+			if (duration_percent > 1)
+				duration_percent = 1;
+			else if (duration_percent < 0)
+				duration_percent = 0;
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+
+			DrawBar(windowWidth, duration_percent, UIOPTION.GetJobColor(DAMAGEMETER.GetPlayerJob(_playerID)));
+
+			// NAME
+			ImGui::Text((*itr)->GetName());
+
+			ImGui::TableNextColumn();
+
+			// DURATION
+			sprintf_s(label, 128, "%.0f", duration_percent * 100);
+			ImGui::Text(label);
+		}
+
+		ImGui::SetWindowFontScale(_globalFontScale);
+		ImGui::EndTable();
+	}
+
+	style.WindowPadding.x = prevWindowPadding.x;
+	style.WindowPadding.y = prevWindowPadding.y;
 }
 
 VOID SpecificInformation::DrawBar(FLOAT window_Width, FLOAT percent, ImU32 color) {

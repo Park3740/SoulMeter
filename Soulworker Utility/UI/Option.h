@@ -27,6 +27,7 @@ private:
 	FLOAT _framerate;
 	FLOAT _windowBorderSize;
 	FLOAT _windowWidth;
+	FLOAT _refreshTime;
 	BOOL ShowTableOption();
 
 	BOOL ShowHotkeySetting();
@@ -60,7 +61,10 @@ public:
 	const BOOL& is1M();
 
 	const FLOAT& GetFramerate();
+	VOID SetFramerate(UINT i);
 
 	const FLOAT& GetWindowWidth();
 	VOID SetWindowWidth(const FLOAT& width);
+
+	const FLOAT& GetRefreshTime();
 };

@@ -130,6 +130,29 @@ BOOL MySQL::InitMapDB() {
 	return TRUE;
 }
 
+BOOL MySQL::InitBuffDB() {
+	CHAR* errbuf = nullptr;
+
+	const CHAR* sql = "CREATE TABLE IF NOT EXISTS Buff(Id INTEGER PRIMARY KEY, Name TEXT NOT NULL);";
+
+	if (sqlite3_exec(_db, sql, 0, 0, &errbuf) != SQLITE_OK) {
+		Log::WriteLogA(const_cast<CHAR*>("Error in InitBuffDB : %s"), errbuf);
+		sqlite3_free(errbuf);
+
+		return FALSE;
+	}
+
+	const CHAR* sql2 = "SELECT Name From Buff Where Id = ?";
+
+	if (sqlite3_prepare_v2(_db, sql2, -1, &_buff_stmt, 0) != SQLITE_OK) {
+		Log::WriteLogA(const_cast<CHAR*>("Error in sqlite3_prepare_v2 : %s"), sqlite3_errmsg(_db));
+
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 BOOL MySQL::InitSkillTimelineDB() {
 
 	return TRUE;
@@ -166,6 +189,11 @@ BOOL MySQL::Init() {
 		}
 
 		if (!InitMemDB()) {
+			success = FALSE;
+			break;
+		}
+
+		if (!InitBuffDB()) {
 			success = FALSE;
 			break;
 		}
@@ -271,3 +299,34 @@ BOOL MySQL::GetMapName(UINT32 mapID, CHAR* out_buffer, SIZE_T out_buffer_length)
 
 	return TRUE;
 }
+
+BOOL MySQL::GetBuffName(UINT32 buffId, CHAR* out_buffer, SIZE_T out_buffer_length) {
+
+	if (out_buffer == nullptr || _buff_stmt == nullptr)
+		return FALSE;
+
+	if (buffId == 0) {
+		strcpy_s(out_buffer, out_buffer_length, const_cast<CHAR*>(u8"Unknown"));
+		return TRUE;
+	}
+
+	sprintf_s(out_buffer, out_buffer_length, "%d", buffId);
+
+	sqlite3_reset(_buff_stmt);
+
+	sqlite3_bind_int(_buff_stmt, 1, buffId);
+
+	INT step = sqlite3_step(_buff_stmt);
+
+	if (step == SQLITE_ROW) {
+		const CHAR* result = (const CHAR*)sqlite3_column_text(_buff_stmt, 0);
+
+		if (result == nullptr || strlen(result) > out_buffer_length)
+			return FALSE;
+
+		strcpy_s(out_buffer, out_buffer_length, result);
+	}
+
+	return TRUE;
+}
+

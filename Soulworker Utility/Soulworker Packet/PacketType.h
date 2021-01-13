@@ -8,6 +8,8 @@
 #include ".\Soulworker Packet\SWPacketPos.h"
 #include ".\Soulworker Packet\SWPacketMazeStart.h"
 #include ".\Soulworker Packet\SWPacketMazeEnd.h"
+#include ".\Soulworker Packet\SWPacketBuffIn.h"
+#include ".\Soulworker Packet\SWPacketBuffOut.h"
 
 enum OPcode {
 	DAMAGE = 0x1306,
@@ -16,6 +18,8 @@ enum OPcode {
 	AKASIC = 0x7b06,
 	PARTY = 0x0912,
 	POS = 0x092e,
-	MAZEEND = 0x7511,	// 임시
-	MAZESTART = 0x0804,	// 임시
+	MAZEEND = 0x7511,	
+	MAZESTART = 0x0804,
+	BUFFIN = 0x1406,
+	BUFFOUT = 0x1506,
 };

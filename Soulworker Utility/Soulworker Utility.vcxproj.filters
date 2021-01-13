@@ -73,7 +73,7 @@
     <Filter Include="UI\Window\UI">
       <UniqueIdentifier>{d1da892c-51f8-4ffd-af79-67efd73c9dad}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Buff Meter">
+    <Filter Include="Damge Meter\Buff Meter">
       <UniqueIdentifier>{0e1b8015-2f51-4434-97a0-aa057ccba788}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -200,6 +200,18 @@
     </ClInclude>
     <ClInclude Include="Third Party\tinyxml2\tinyxml2.h">
       <Filter>tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="Buff Meter\Buff Meter.h">
+      <Filter>Damge Meter\Buff Meter</Filter>
+    </ClInclude>
+    <ClInclude Include="Buff Meter\Buff.h">
+      <Filter>Damge Meter\Buff Meter</Filter>
+    </ClInclude>
+    <ClInclude Include="Soulworker Packet\SWPacketBuffIn.h">
+      <Filter>SWPacket\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Soulworker Packet\SWPacketBuffOut.h">
+      <Filter>SWPacket\Packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -328,6 +340,18 @@
     </ClCompile>
     <ClCompile Include="Third Party\tinyxml2\tinyxml2.cpp">
       <Filter>tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="Buff Meter\Buff Meter.cpp">
+      <Filter>Damge Meter\Buff Meter</Filter>
+    </ClCompile>
+    <ClCompile Include="Buff Meter\Buff.cpp">
+      <Filter>Damge Meter\Buff Meter</Filter>
+    </ClCompile>
+    <ClCompile Include="Soulworker Packet\SWPacketBuffIn.cpp">
+      <Filter>SWPacket\Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="Soulworker Packet\SWPacketBuffOut.cpp">
+      <Filter>SWPacket\Packet</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

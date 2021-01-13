@@ -5,6 +5,8 @@
 #include <string>
 using namespace std;
 
+typedef std::chrono::system_clock::time_point timePoint;
+
 #define FLOOR(x) (FLOAT)((INT)x)
 
 inline BOOL UTF16toUTF8(_In_ WCHAR* src, _Out_ CHAR* dest, _In_ SIZE_T destLen) {

@@ -20,9 +20,13 @@ private:
 
 	ImGuiContext* _imGuiContext;
 
+	timePoint _prevTimePoint;
+	FLOAT _deltaTime;
+
 	VOID DrawScene();
 	VOID Update();
 	VOID OnResize();
+	VOID CalcDeltaTime();
 
 	BOOL InitImGUI();
 	BOOL SetFontList();
@@ -37,4 +41,5 @@ public:
 	BOOL Init(UINT x, UINT y, UINT width, UINT height);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	const HWND& GetHWND();
+	const FLOAT& GetDeltaTime();
 };

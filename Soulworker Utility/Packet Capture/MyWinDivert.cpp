@@ -11,6 +11,7 @@ DWORD MyWinDivert::Init() {
 
 		if (_handle == INVALID_HANDLE_VALUE) {
 			Log::WriteLog(const_cast<LPTSTR>(_T("Error in WinDivertOpen: %x")), GetLastError());
+			error = ERROR_INVALID_HANDLE;
 			break;
 		}
 

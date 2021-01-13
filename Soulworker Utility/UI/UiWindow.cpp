@@ -69,19 +69,22 @@ BOOL UiWindow::Init(UINT x, UINT y, UINT width, UINT height) {
 		return FALSE;
 	}
 
-	_x = x; _y = y; _width = width, _height = height;
+	_x = x; _y = y; _width = width, _height = height, _prevTimePoint = std::chrono::system_clock::now();
+
+	ShowWindow(_hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(_hWnd);
 
 	if (!DIRECTX11.Init()) {
 		Log::WriteLog(const_cast<LPTSTR>(_T("Error in DirectX Init")));
 		return FALSE;
 	}
 
-	
+
 	if (!DXINPUT.Init(_hInst, _hWnd)) {
 		Log::WriteLog(const_cast<LPTSTR>(_T("Error in Direct Input Init")));
 		return FALSE;
 	}
-	
+
 
 	if ((_swapChain = DIRECTX11.CreateSwapChain(_hWnd)) == nullptr) {
 		Log::WriteLog(const_cast<LPTSTR>(_T("Error in CreateSwapChain")));
@@ -93,14 +96,11 @@ BOOL UiWindow::Init(UINT x, UINT y, UINT width, UINT height) {
 		return FALSE;
 	}
 
-	ShowWindow(_hWnd, SW_SHOWDEFAULT);
-	UpdateWindow(_hWnd);
-
 	if (!InitImGUI()) {
 		Log::WriteLog(const_cast<LPTSTR>(_T("Error in Init ImGUI")));
 		return FALSE;
 	}
-
+	
 	return TRUE;
 }
 
@@ -122,6 +122,8 @@ BOOL UiWindow::InitImGUI() {
 		style.WindowRounding = 0.0f;
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
+
+	style.WindowMinSize = ImVec2(20, 20);
 
 	if (!ImGui_ImplWin32_Init(_hWnd))
 		return FALSE;
@@ -178,22 +180,23 @@ VOID UiWindow::Run() {
 			DispatchMessage(&msg);
 			continue;
 		}
-
+		
 		Update();
 	}
 }
 
 VOID UiWindow::Update() {
-
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	CalcDeltaTime();
 	DXINPUT.Update();
 	HOTKEY.Update();
 	UIOPTION.Update();
 	UpdateMainTable();
 
+	ImGui::EndFrame();
 	DrawScene();
 }
 
@@ -228,6 +231,12 @@ LRESULT UiWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		_height = HIWORD(lParam);
 		OnResize();
 		break;
+	case WM_KILLFOCUS:
+		UIOPTION.SetFramerate(4);
+		break;
+	case WM_SETFOCUS:
+		UIOPTION.SetFramerate(1);
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -254,10 +263,20 @@ VOID UiWindow::OnResize() {
 	}
 }
 
+VOID UiWindow::CalcDeltaTime() {
+	std::chrono::duration<FLOAT> deltaTime = std::chrono::system_clock::now() - _prevTimePoint;
+	_prevTimePoint = std::chrono::system_clock::now();
+	_deltaTime = deltaTime.count();
+}
+
 VOID UiWindow::UpdateMainTable() {
 	PLAYERTABLE.Update();
 }
 
 const HWND& UiWindow::GetHWND() {
 	return _hWnd;
+}
+
+const FLOAT& UiWindow::GetDeltaTime() {
+	return _deltaTime;
 }

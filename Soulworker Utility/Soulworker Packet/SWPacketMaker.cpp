@@ -34,7 +34,7 @@ VOID SWPacketMaker::Decrypt(BYTE* data, const UINT size, const UINT start) {
 		return;
 
 	for (UINT i = 0; i < size; i++) 
-		data[i + start] ^= _keyTable[i % 3];
+		data[i + start] ^= _keyTable[i % (sizeof(_keyTable) / sizeof(BYTE))];
 }
 
 VOID SWPacketMaker::ResizePacket(IPv4Packet* packet) {
@@ -190,6 +190,12 @@ VOID SWPacketMaker::CreateSWPacket(IPv4Packet* packet) {
 			break;
 		case OPcode::MAZEEND:
 			swpacket = new SWPacketMazeEnd(swheader, data);
+			break;
+		case OPcode::BUFFIN:
+			swpacket = new SWPacketBuffIn(swheader, data);
+			break;
+		case OPcode::BUFFOUT:
+			swpacket = new SWPacketBuffOut(swheader, data);
 			break;
 		default:
 			swpacket = new SWPacket(swheader, data);

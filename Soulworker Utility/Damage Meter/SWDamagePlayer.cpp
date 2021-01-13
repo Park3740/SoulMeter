@@ -35,20 +35,21 @@ VOID SWDamagePlayer::InsertMonsterInfo(UINT32 monsterID, UINT64 damage, UINT64 c
 
 	auto itr = _monsterInfo.begin();
 
-	for (; itr != _monsterInfo.end(); itr++) {
-		if (monsterID == (*itr)->GetID()) {
-			(*itr)->AddDamage(damage, critDamage, hitCount, critHitCount, skillID);
-			return;
-		}
-	}
-
 	SW_DB2_STRUCT* db = DAMAGEMETER.GetMonsterDB(monsterID);
+
 	USHORT db1 = 0;
 	UINT32 db2 = 0;
 
 	if (db != nullptr) {
 		db1 = db->_db1;
 		db2 = db->_db2;
+	}
+
+	for (; itr != _monsterInfo.end(); itr++) {
+		if (db1 == (*itr)->GetDB1() && db2 == (*itr)->GetDB2()) {
+			(*itr)->AddDamage(damage, critDamage, hitCount, critHitCount, skillID);
+			return;
+		}
 	}
 	
 	_monsterInfo.push_back(new SWDamageMonster(monsterID, db1, db2, damage, critDamage, hitCount, critHitCount, skillID));
